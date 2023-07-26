@@ -16,4 +16,6 @@ Cuando generen el archivo el contador deberá ser incrementado por cada cadena.
 Usted deberá entregar el informe del practico y el docente podrá pedir que replique la
 experiencia.
 
+### Cosas que hacer
+
 
