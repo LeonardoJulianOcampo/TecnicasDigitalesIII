@@ -16,10 +16,9 @@ int main() {
     unsigned char buffer = 1;
     unsigned char tram=1;
     unsigned char trama[SIZE];
-     int contador;
+    
     for (tram=1;tram<=repeticiones;tram++){
 	
-    	contador=0;
     	for(buffer=1;buffer<=CANT_TRAMAS;buffer++){
 		
 	
@@ -40,7 +39,6 @@ int main() {
             fclose(archivo);
             return 1;
         }
-        contador++;
         printf("q%dq",buffer);
         printf("m%dm",tram);
 	    
