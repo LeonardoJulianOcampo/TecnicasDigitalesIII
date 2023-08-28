@@ -2,7 +2,8 @@
 #include <stdlib.h>
 
 #define SIZE 24
-#define CANT_TRAMAS 5 // aprox para que el archivo pese 1mb(41667x24=1.000.000)
+#define CANT_TRAMAS 250 
+#define repeticiones 168
 
 int main() {
 
@@ -12,15 +13,21 @@ int main() {
         return 1;
     }
 
-    unsigned char contador = 1;
+    unsigned char buffer = 1;
+    unsigned char tram=1;
     unsigned char trama[SIZE];
-
-    while(contador<=CANT_TRAMAS){
+     int contador;
+    for (tram=1;tram<=repeticiones;tram++){
+	
+    	contador=0;
+    	for(buffer=1;buffer<=CANT_TRAMAS;buffer++){
+		
 	
         trama[0] = 0x1b;
-        trama[1] = contador;
-        for (int i = 2; i < SIZE; i++) {
-            trama[i] = i + contador;
+        trama[1] = buffer;
+        int i;
+        for ( i = 2; i <= SIZE; i++) {
+            trama[i] = i + buffer;
             printf("x%dx",i);
 
         }
@@ -33,10 +40,11 @@ int main() {
             fclose(archivo);
             return 1;
         }
-
         contador++;
-        printf("q%dq",contador);
-
+        printf("q%dq",buffer);
+        printf("m%dm",tram);
+	    
+}
 }
 
    
