@@ -37,7 +37,11 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define lengthTransmit  38    //16 entradas y salidas digitales, 8 entradas analógicas, 2 salidas analógicas y 3 bytes en incio
+#define lengthReceive  14     //Longitud que espera la uart del dato a recibir, son 8 salidas digitales y 2 analógicas y 2 bytes de inicio y fin
+#define lengthDigInOut  16    //Son 8 entradas digitales y 8 salidas digitales
+#define lengthAnalogInOut  10 //Son 8 entradas y 2 salidas analógicas
+const char *errorTransmision = "reenviar Tx"; //código de error a recibir desde QT
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -49,11 +53,8 @@ TIM_HandleTypeDef htim4;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-const uint8_t lengthTransmit = 38; //16 entradas y salidas digitales, 8 entradas analógicas, 2 salidas analógicas y 3 bytes en incio
-const uint8_t lengthReceive = 14; //Longitud que espera la uart del dato a recibir, son 8 salidas digitales y 2 analógicas y 2 bytes de inicio y fin
-const uint8_t lengthDigInOut = 16; //Son 8 entradas digitales y 8 salidas digitales
-const uint8_t lengthAnalogInOut = 10;
-const char *errorTransmision = "reenviar Tx"; //código de error a recibir desde QT
+
+
 uint8_t flagChange = 0; //variable para cambiar el valor de channelMux cuando el dato se haya guardado
 uint8_t channelMux     =  0;  //variable para swtichear entre los canales del mux, va del 0 al 7
 uint16_t analogInOut[lengthAnalogInOut]   = {}; //array para guardar las lecturas de las entradas analógicas, 8 entradas y 2 salidas
@@ -73,7 +74,7 @@ static void MX_TIM4_Init(void);
 
 void envioDeDatos(void);
 void analogToByte(uint16_t * analogData);
-void ADC_Select_CH1 (void);
+void ADC_Select_CH0 (void);
 void ADC_Select_CH1 (void);
 
 
