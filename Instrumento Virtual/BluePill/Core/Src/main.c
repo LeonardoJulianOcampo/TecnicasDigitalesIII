@@ -28,10 +28,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-void envioDeDatos(void);
-void analogToByte(uint16_t * analogData);
-void ADC_Select_CH1 (void);
-void ADC_Select_CH1 (void);
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -52,7 +49,17 @@ TIM_HandleTypeDef htim4;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-
+const uint8_t lengthTransmit = 38; //16 entradas y salidas digitales, 8 entradas analógicas, 2 salidas analógicas y 3 bytes en incio
+const uint8_t lengthReceive = 14; //Longitud que espera la uart del dato a recibir, son 8 salidas digitales y 2 analógicas y 2 bytes de inicio y fin
+const uint8_t lengthDigInOut = 16; //Son 8 entradas digitales y 8 salidas digitales
+const uint8_t lengthAnalogInOut = 10;
+const char *errorTransmision = "reenviar Tx"; //código de error a recibir desde QT
+uint8_t flagChange = 0; //variable para cambiar el valor de channelMux cuando el dato se haya guardado
+uint8_t channelMux     =  0;  //variable para swtichear entre los canales del mux, va del 0 al 7
+uint16_t analogInOut[lengthAnalogInOut]   = {}; //array para guardar las lecturas de las entradas analógicas, 8 entradas y 2 salidas
+uint8_t digitalInOut[lengthDigInOut]   = {}; //array para guardar las lecturas de las entradas digitales, 8 entradas y salidas
+uint8_t dataSend[lengthTransmit]   = {}; //array para el envio de datos
+uint8_t dataReceive[lengthReceive] = {}; //array para el recibo de dato, no se si es necesario, lo sabremos luego
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,47 +70,18 @@ static void MX_TIM1_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
-void ADC_Select_CH0 (void)
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	/** Configure Regular Channel
-	  */
-	  sConfig.Channel = ADC_CHANNEL_0;
-	  sConfig.Rank = ADC_REGULAR_RANK_1;
-	  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
-	  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	  {
-	    Error_Handler();
-	  }
-}
+
+void envioDeDatos(void);
+void analogToByte(uint16_t * analogData);
+void ADC_Select_CH1 (void);
+void ADC_Select_CH1 (void);
 
 
-void ADC_Select_CH1 (void)
-{
-	ADC_ChannelConfTypeDef sConfig = {0};
-	/** Configure Regular Channel
-	  */
-	  sConfig.Channel = ADC_CHANNEL_1;
-	  sConfig.Rank = ADC_REGULAR_RANK_2;
-	  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-	  {
-		Error_Handler();
-	  }
-}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-const uint8_t lengthTransmit = 38; //Longitud que espera la uart del dato a enviar
-const uint8_t lengthReceive = 16; //Longitud que espera la uart del dato a recibir
-const uint8_t digitalInOutLength = 16; //Logitud de datos que guarda digitalInOut[16]
-const char *errorTransmision = "reenviar Tx";
-uint8_t flagChange = 0; //variable para cambiar el valor de channelMux cuando el dato se haya guardado
-uint8_t channelMux     =  0;  //variable para swtichear entre los canales del mux
-uint16_t analogInOut[10]   = {}; //array para guardar las lecturas de las entradas analógicas
-uint8_t digitalInOut[16]   = {}; //array para guardar las lecturas de las entradas digitales
-uint8_t dataSend[38]   = {}; //array para el envio de datos
-uint8_t dataReceive[16] = {}; //array para el recibo de dato, no se si es necesario, lo sabremos luego
+
 /* USER CODE END 0 */
 
 /**
@@ -141,6 +119,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_IT(&huart3,dataReceive, lengthReceive); //receive data from data buffer interrupt mode
   HAL_TIM_Base_Start_IT(&htim1);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -212,7 +192,7 @@ static void MX_ADC1_Init(void)
 
   /* USER CODE END ADC1_Init 0 */
 
-//  ADC_ChannelConfTypeDef sConfig = {0};
+  ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
 
@@ -233,24 +213,23 @@ static void MX_ADC1_Init(void)
   }
 
   /** Configure Regular Channel
-
+  */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
-  }*/
-
+  }
 
   /** Configure Regular Channel
-
+  */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
-  }*/
+  }
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
@@ -473,9 +452,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		digitalInOut[channelMux] = HAL_GPIO_ReadPin(channelsIn[channelMux].portD, channelsIn[channelMux].digitalPin);
 
 		if ( channelMux == 7){
-			ADC_Select_CH0();
-			HAL_ADC_Start_IT(&hadc1);
-			//analogInOut[channelMux] = 0; tengo que guardar la lectura del adc de la entrada 8
+			ADC_Select_CH0(); //selecciono el canal del adc a leer
+			HAL_ADC_Start_IT(&hadc1); //inicio el acc en modo interrupcion
 			if (flagChange == 1){
 				channelMux = 0; //incrementa antes de pasar a envio de datos por si vuelve a activarse el timer antes de terminar envioDeDatos()
 				flagChange = 0 ;
@@ -486,7 +464,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			for (uint8_t i=0; i<3; i++){
 				HAL_GPIO_WritePin(channelsIn[channelMux].port, channelsIn[channelMux].pin[i], (GPIO_PinState)channelsIn[channelMux].value[i]); //casteamos el valor para que sea un estado de pin admitido
 			}
-			ADC_Select_CH1();
+			ADC_Select_CH1(); //selecciono el canal del mux para leer
 			HAL_ADC_Start_IT(&hadc1);
 			if (flagChange == 1) {
 				channelMux = (channelMux + 1) % 8; //para mantener el número entre 0 y 7
@@ -514,11 +492,23 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	// Verifica si los datos recibidos son iguales a "reenviar transmision"
 	if (strncmp((char*)dataReceive, errorTransmision, strlen(errorTransmision)) == 0) {
 		HAL_UART_Transmit_IT(&huart3,dataSend, lengthTransmit); //envio de datos a través de la uart por interrupción
-	}else if ( dataReceive[0] == 'I' && dataReceive[15] == 'E'){
-		for (uint8_t i = 0; i<8 ; i++){
+	}else if ( dataReceive[0] == 'I' && dataReceive[lengthReceive-1] == 'E'){
+		//Escribo los valores obtenidos en las salidas digitales
+		for (uint8_t i = 0; i<=8 ; i++){
 			HAL_GPIO_WritePin(channelsOut[i].port, channelsOut[i].digitalPin, dataReceive[i+1]);
 		}
-		//falta recibir los datos anaógicos para poder modificar el PWM en las salidas analógicas
+		//Modifico el formato de la salida analógica recibida a tipo uint_16
+		uint16_t A_OUT1 = (uint16_t)(dataReceive[9] << 8 | dataReceive[10]);
+		uint16_t A_OUT2 = (uint16_t)(dataReceive[11] << 8 | dataReceive[12]);
+		//Lo guardo en el array de entradas y salidas analógicas
+		analogInOut[8] = A_OUT1;
+		analogInOut[9] = A_OUT2;
+		// Asigno los valores a CCR1 y CCR2, previamente casteados a uint32, que manejan el duty del PWM
+		TIM4->CCR1 = (uint32_t)A_OUT1;
+		TIM4->CCR2 = (uint32_t)A_OUT2;
+		//Envío los datos para actualizar los valores de QT
+		envioDeDatos();
+
 	}
 }
 
@@ -528,12 +518,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
  */
 void envioDeDatos(void){
 	uint8_t Outs = 0;
-	for (uint8_t i=0; i<= digitalInOutLength + 2; i++){
+	for (uint8_t i=0; i< lengthDigInOut + 3; i++){
 		if(i == 0) dataSend[i] = 'x';
 		else if (i == 1) dataSend[i] = 'f';
 		else if (i == 2) dataSend[i] = 'x';
-		else if(i>2 && i<=10) dataSend[i] = digitalInOut[i];
+		else if(i>2 && i<=10) dataSend[i] = digitalInOut[i]; // guardo en el array dataSend las entradas digitales
 		else {
+			//Guardo en el array sendData las salidas digitales
 			dataSend[i] = HAL_GPIO_ReadPin(channelsOut[Outs].port, channelsOut[Outs].digitalPin);
 			Outs = (Outs + 1) % 8;
 		}
@@ -548,15 +539,42 @@ void envioDeDatos(void){
  */
 void analogToByte(uint16_t * analogData) {
   uint8_t k = 19;
-  for (uint8_t i = 0; i < 10; ++i) {
+  for (uint8_t i = 0; i < lengthAnalogInOut; ++i) {
 	  uint16_t numero = analogData[i];
-      // Serial.println(numero);
+	  // cada entero tipo uin16_t ocupa 2 bytes (uint8_t)
       for (uint8_t j=0; j<2; j++){
         dataSend[k] = (numero >> (j * 8)) & 0xFF;
-        // Serial.println(sendData[k]);
         k++;
       }
   }
+}
+
+void ADC_Select_CH0 (void)
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	/** Configure Regular Channel
+	  */
+	  sConfig.Channel = ADC_CHANNEL_0;
+	  sConfig.Rank = ADC_REGULAR_RANK_1;
+	  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+	  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+}
+
+
+void ADC_Select_CH1 (void)
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	/** Configure Regular Channel
+	  */
+	  sConfig.Channel = ADC_CHANNEL_1;
+	  sConfig.Rank = ADC_REGULAR_RANK_2;
+	  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	  {
+		Error_Handler();
+	  }
 }
 /* USER CODE END 4 */
 
