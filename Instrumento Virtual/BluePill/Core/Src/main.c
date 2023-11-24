@@ -37,7 +37,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define lengthTransmit  38    //16 entradas y salidas digitales, 8 entradas analógicas, 2 salidas analógicas y 3 bytes en incio
+#define lengthTransmit  40    //16 entradas y salidas digitales, 8 entradas analógicas, 2 salidas analógicas y 3 bytes en incio
 #define lengthReceive  14     //Longitud que espera la uart del dato a recibir, son 8 salidas digitales y 2 analógicas y 2 bytes de inicio y fin
 #define lengthDigInOut  16    //Son 8 entradas digitales y 8 salidas digitales
 #define lengthAnalogInOut  10 //Son 8 entradas y 2 salidas analógicas
@@ -58,7 +58,7 @@ UART_HandleTypeDef huart3;
 uint8_t flagChange = 0; //variable para cambiar el valor de channelMux cuando el dato se haya guardado
 uint8_t channelMux     =  0;  //variable para swtichear entre los canales del mux, va del 0 al 7
 uint16_t analogInOut[lengthAnalogInOut]   = {}; //array para guardar las lecturas de las entradas analógicas, 8 entradas y 2 salidas
-uint8_t digitalInOut[lengthDigInOut]   = {}; //array para guardar las lecturas de las entradas digitales, 8 entradas y salidas
+uint8_t digitalIn[8]   = {}; //array para guardar las lecturas de las entradas digitales, 8 entradas y salidas
 uint8_t dataSend[lengthTransmit]   = {}; //array para el envio de datos
 uint8_t dataReceive[lengthReceive] = {}; //array para el recibo de dato, no se si es necesario, lo sabremos luego
 /* USER CODE END PV */
@@ -412,7 +412,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = D_IN7_Pin|D_IN6_Pin|D_IN5_Pin|D_IN4_Pin
                           |D_IN3_Pin|D_IN2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : D_IN1_Pin D_IN8_Pin */
@@ -448,9 +448,8 @@ static void MX_GPIO_Init(void)
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim->Instance == TIM1){
-		//leo las entrada digital correspondiente al case ejecutandose
-		digitalInOut[channelMux] = HAL_GPIO_ReadPin(channelsIn[channelMux].portD, channelsIn[channelMux].digitalPin);
+	HAL_UART_Receive_IT(&huart3, dataReceive, lengthReceive);
+ 	if (htim->Instance == TIM1){
 
 		if ( channelMux == 7){
 			ADC_Select_CH0(); //selecciono el canal del adc a leer
@@ -472,6 +471,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				flagChange = 0 ;
 			}
 		}
+
+ 		//leo las entrada digital correspondiente al case ejecutandose
+ 		digitalIn[channelMux] = HAL_GPIO_ReadPin(channelsIn[channelMux].portD, channelsIn[channelMux].digitalPin);
+		//digitalIn[channelMux] = 1;
 	}
 }
 
@@ -491,12 +494,17 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	// Verifica si los datos recibidos son iguales a "reenviar transmision"
-	if (strncmp((char*)dataReceive, errorTransmision, strlen(errorTransmision)) == 0) {
-		HAL_UART_Transmit_IT(&huart3,dataSend, lengthTransmit); //envio de datos a través de la uart por interrupción
-	}else if ( dataReceive[0] == 'I' && dataReceive[lengthReceive-1] == 'E'){
+//	if (strncmp((char*)dataReceive, errorTransmision, strlen(errorTransmision)) == 0) {
+//		HAL_UART_Transmit_IT(&huart3,dataSend, lengthTransmit); //envio de datos a través de la uart por interrupción
+//	}else
+
+	if ( dataReceive[0] == 'I' && dataReceive[lengthReceive-1] == 'E'){
 		//Escribo los valores obtenidos en las salidas digitales
-		for (uint8_t i = 0; i<=8 ; i++){
-			HAL_GPIO_WritePin(channelsOut[i].port, channelsOut[i].digitalPin, dataReceive[i+1]);
+		for (uint8_t i = 0; i<8 ; i++){
+			if(i == 6 ){
+				continue;
+			}
+			HAL_GPIO_WritePin(channelsOut[i].port, channelsOut[i].digitalPin, (GPIO_PinState)dataReceive[i+1]);
 		}
 		//Modifico el formato de la salida analógica recibida a tipo uint_16
 		uint16_t A_OUT1 = (uint16_t)(dataReceive[9] << 8 | dataReceive[10]);
@@ -508,9 +516,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 		TIM4->CCR1 = (uint32_t)A_OUT1;
 		TIM4->CCR2 = (uint32_t)A_OUT2;
 		//Envío los datos para actualizar los valores de QT
-		envioDeDatos();
-
+		//envioDeDatos();
+		HAL_UART_Receive_IT(&huart3, dataReceive, lengthReceive);
 	}
+
 }
 
 
@@ -519,27 +528,28 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
  */
 void envioDeDatos(void){
 	uint8_t Outs = 0;
-	for (uint8_t i=0; i< lengthDigInOut + 3; i++){
-		if(i == 0) dataSend[i] = 'x';
-		else if (i == 1) dataSend[i] = 'f';
-		else if (i == 2) dataSend[i] = 'x';
-		else if(i>2 && i<=10) dataSend[i] = digitalInOut[i]; // guardo en el array dataSend las entradas digitales
-		else {
-			//Guardo en el array sendData las salidas digitales
-			dataSend[i] = HAL_GPIO_ReadPin(channelsOut[Outs].port, channelsOut[Outs].digitalPin);
-			Outs = (Outs + 1) % 8;
+	dataSend[0] = 'x';
+	dataSend[1] = 'f';
+	dataSend[2] = 'x';
+	analogToByte(analogInOut); //guarda los datos del 3 al 22
+	for (uint8_t i=23; i< lengthDigInOut + 23; i++){
+			if(i<=30) dataSend[i] = digitalIn[i-23]; // guardo en el array dataSend las entradas digitales
+			else{
+				//Guardo en el array sendData las salidas digitales
+				dataSend[i] = HAL_GPIO_ReadPin(channelsOut[Outs].port, channelsOut[Outs].digitalPin);
+				Outs = (Outs + 1) % 8;
+			}
 		}
-	}
-	analogToByte(analogInOut);
+	dataSend[39] = '\n';
 	HAL_UART_Transmit_IT(&huart3,dataSend, lengthTransmit); //envio de datos a través de la uart por interrupción
 
 }
 
 /*Función que se encarga de transformar los valores obtenidos del ADC (0 al 4095) en bytes y almacenarlos en sendData
- * ocupan los lugres del 19 al 38 en el array
+ * ocupan los lugres del 3 al 22 en el array
  */
 void analogToByte(uint16_t * analogData) {
-  uint8_t k = 19;
+  uint8_t k = 3;
   for (uint8_t i = 0; i < lengthAnalogInOut; ++i) {
 	  uint16_t numero = analogData[i];
 	  // cada entero tipo uin16_t ocupa 2 bytes (uint8_t)
@@ -549,6 +559,7 @@ void analogToByte(uint16_t * analogData) {
       }
   }
 }
+
 
 void ADC_Select_CH0 (void)
 {

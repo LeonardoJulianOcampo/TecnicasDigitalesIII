@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     esp32 = new QSerialPort(this);
     resetDisplays(); //para inicializar los display con las rayitas
+    miTimer = new QTimer(this);
 
     //Conexiones de los widgets
     connect(ui->Out_A1_slider, &QSlider::valueChanged, this, &MainWindow::readSlider);
@@ -35,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->outB6, &QRadioButton::toggled, this, &MainWindow::readButton);
     connect(ui->outB7, &QRadioButton::toggled, this, &MainWindow::readButton);
     connect(ui->outB8, &QRadioButton::toggled, this, &MainWindow::readButton);
+    connect(miTimer, &QTimer::timeout, this, &MainWindow::readSerial);
+
 
 
     //para guardar los valores de los widgets en el array
@@ -79,11 +82,14 @@ MainWindow::MainWindow(QWidget *parent)
         esp32->setFlowControl(QSerialPort::NoFlowControl);
         esp32->setParity(QSerialPort::NoParity);
         esp32->setStopBits(QSerialPort::OneStop);
-        QObject::connect(esp32, SIGNAL(readyRead()), this, SLOT(readSerial()));
+        //QObject::connect(esp32, SIGNAL(readyRead()), this, SLOT(readSerial()));
     }else{
         qDebug() << "Couldn't find the correct port for the esp32. \n";
         QMessageBox::information(this, "Serial Port Error", "Couldn't open serial port to esp32"); //te abre un mensaje mostrandote el mensaje, lo primero es el titulo, lo segundo es el contenido del mensaje
     }
+
+    miTimer->setInterval(100);
+    miTimer->start();
 
 }
 
@@ -95,13 +101,25 @@ MainWindow::~MainWindow()
 //Lee los datos enviados desde la placa
 void MainWindow::readSerial(void)
 {
-    serialData = esp32->readAll();
-    qDebug() << serialData;
-    if(serialData.size() == 39 && serialData.at(0) == 'f'){ //debería ser una and no una or
-        dato.clear();
+    if (esp32->bytesAvailable() < 40) {
+        // No hay suficientes bytes disponibles, salir o manejar de alguna manera
+        return;
+    }
+
+    serialData = esp32-> readLine(40);
+    //serialData = esp32->readAll();
+    //serialData = esp32 -> read(40);
+
+    if(serialData.at(0) == 'x'){ //debería ser una and no una or
+        if (serialData.size() == 39 ){
+            printData(dato); //llamamos a la función que imprime los datos en los widgets
+            dato.clear();
+        }
+
+
         dato = serialData;
-        qDebug() << dato.size();
-        printData(dato); //llamamos a la función que imprime los datos en los widgets
+
+
     }
 }
 
@@ -136,8 +154,9 @@ void MainWindow::readSlider(void)
 
     int value1 = ui->Out_A1_slider->sliderPosition();
     int value2 = ui->Out_A2_slider->sliderPosition();
-    intsToByte(value1);
-    intsToByte(value2);
+    qDebug() << "value" << value1;
+    intsToByte(value1, 9);
+    intsToByte(value2, 11);
     /*
      *Por el momento le estamos mandando números del 0 al 500 dependiendo los valores
      *dependiendo los valores que veamos que admite el pwm ajustamos el slider ahí
@@ -150,9 +169,11 @@ void MainWindow::readSlider(void)
 //Muestra los datos en los widgets
 void MainWindow::printData(QByteArray dato)
 {
+    esp32->clear();
     if(!dato.isEmpty()){
 
-        int j = 2;
+        int j = 3; //porque ingresan los 3 digitos de cabecera y se come el salto de línea
+
         //Asigno los valores desde datos al array con los nombres de los widgets
         for (int i=0; i<26; i++){
             if(i<10){
@@ -162,7 +183,7 @@ void MainWindow::printData(QByteArray dato)
                     channelsWidgets[i].value = bytesToInt(dato,(j)); //asigno señales analógicos con 2 bytes
                 j+= 2;
             }else{
-                int k = i+12;
+                int k = i+13; //en la posición 23 se encuentra el primer byte de entrada
                 channelsWidgets[i].value = dato.at(k); //asigno señales digitales con 1 byte
             }
         }
@@ -170,6 +191,9 @@ void MainWindow::printData(QByteArray dato)
         //Muestros los valores guardados en los widgets
         for (int i=0; i<26; i++){
             if (channelsWidgets[i].widget) {
+//                if(i==24){
+//                    continue;
+//                }
                 channelsWidgets[i].widget->display(channelsWidgets[i].value);
             } else {
                 qDebug() << "El puntero a QLCDNumber no es válido.";
@@ -189,13 +213,13 @@ int MainWindow::bytesToInt (const QByteArray &bytes, int i)
     for(int j=1 ; j>=0; j --){
         result |= (static_cast<unsigned char>(number.at(j)) << ((j)*8));
     }
-    qDebug() <<"este es el resultado: " << result;
+    //qDebug() <<"este es el resultado: " << result;
     return result;
 }
 
 //Mapea los valores de los sliders para mostrar de 0a 5v
 double MainWindow::mapToVoltage(int value) {
-    int minValue = 0, maxValue = 4095;
+    int minValue = 0, maxValue = 500;
     double minVoltage = 0.0, maxVoltage = 5.0;
 
     value = std::max(minValue, std::min(maxValue, value));
@@ -225,8 +249,8 @@ void MainWindow::arrayWidgets(void){
     channelsWidgets[9].widget = ui->Out_A2_value;
 
     //Entradas digitales
-    channelsWidgets[11].widget = ui->In_D1;
-    channelsWidgets[10].widget = ui->In_D2;
+    channelsWidgets[10].widget = ui->In_D1;
+    channelsWidgets[11].widget = ui->In_D2;
     channelsWidgets[12].widget = ui->In_D3;
     channelsWidgets[13].widget = ui->In_D4;
     channelsWidgets[14].widget = ui->In_D5;
@@ -251,19 +275,22 @@ void MainWindow::sendData (void){
     dataToSend[13] = 'E';
 
     //transformo el array de unsigned char a tipo QByteArray
-    QByteArray byteArray(reinterpret_cast<const char*>(dataToSend), sizeof(dataToSend));
 
     // Escribir datos en el puerto serie
-    qint64 bytesWritten = esp32->write(byteArray);
+    qint64 bytesWritten = esp32->write(dataToSend);
+    bytesWritten = esp32->write(dataToSend);
     if (bytesWritten == -1) {
         qDebug() << "Error al escribir en el puerto serie:" << esp32->errorString();
     } else {
         qDebug() << "Bytes escritos:" << bytesWritten;
     }
+
 }
 
 //Para guardar en el array a enviar los valores de las salidas digitales
 void MainWindow::readButton(void){
+    //dataToSend[1] = ui->outB1->isChecked() ? 1 : 0;
+
     dataToSend[1] = ui->outB1->isChecked() ? 1 : 0;
     dataToSend[2] = ui->outB2->isChecked() ? 1 : 0;
     dataToSend[3] = ui->outB3->isChecked() ? 1 : 0;
@@ -272,17 +299,17 @@ void MainWindow::readButton(void){
     dataToSend[6] = ui->outB6->isChecked() ? 1 : 0;
     dataToSend[7] = ui->outB7->isChecked() ? 1 : 0;
     dataToSend[8] = ui->outB8->isChecked() ? 1 : 0;
+
     sendData();
 }
 
 //Para transformar el número de entero a byte
-void MainWindow::intsToByte (int number){
-    int k = 9;
-    for (int i=0; i<2; i++){
-        for (int j=0; j<2; j++){
-            dataToSend[k] = (number >> (j * 8)) & 0xFF;
-            // Serial.println(sendData[k]);
-            k++;
-        }
+void MainWindow::intsToByte (int number, int k){
+
+    for (int j=0; j<2; j++){
+        dataToSend[k] = (number >> (j * 8)) & 0xFF;
+        //qDebug() <<"intsToByte" << dataToSend[k];
+        k++;
     }
+
 }

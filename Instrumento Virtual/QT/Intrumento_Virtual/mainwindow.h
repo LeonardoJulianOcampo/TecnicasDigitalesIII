@@ -6,7 +6,8 @@
 #include <QtSerialPort>
 #include <QVBoxLayout>
 #include <QLCDNumber>
-//#include "widgetconfig.h"
+#include <QByteArray>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -26,6 +27,7 @@ public:
     }configWidget;
 
     configWidget channelsWidgets[26];
+    QByteArray dataToSend;
 
 private slots:
     void readSerial(void);
@@ -40,16 +42,17 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QSerialPort *esp32;
-
-    static const quint16 esp32_vendor_id =6790 ;//6790;4292
-    static const quint16 esp32_product_id = 21972;//;60000
+    QTimer *miTimer;
+    static const quint16 esp32_vendor_id =  6790 ;//6790;4292
+    static const quint16 esp32_product_id = 29987; //21972;//;60000
 
 
     QByteArray serialData;
     QByteArray dato;
-   unsigned char dataToSend[14] = {0};
+    //unsigned char dataToSend[14] = {0};
+
     int bytesToInt (const QByteArray &bytes, int i);
-    void intsToByte (int number);
+    void intsToByte (int number, int k);
     double mapToVoltage(int value);
     //widgetConfig widgetConfigInstance;  // Declarar una instancia de widgetConfig
 
