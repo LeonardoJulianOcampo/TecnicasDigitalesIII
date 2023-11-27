@@ -396,7 +396,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, S0_Pin|S1_Pin|S2_Pin|D_OUT1_Pin
+  HAL_GPIO_WritePin(GPIOB, S2_Pin|S1_Pin|S0_Pin|D_OUT1_Pin
                           |D_OUT8_Pin|D_OUT4_Pin|D_OUT5_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -421,9 +421,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : S0_Pin S1_Pin S2_Pin D_OUT1_Pin
+  /*Configure GPIO pins : S2_Pin S1_Pin S0_Pin D_OUT1_Pin
                            D_OUT8_Pin D_OUT4_Pin D_OUT5_Pin */
-  GPIO_InitStruct.Pin = S0_Pin|S1_Pin|S2_Pin|D_OUT1_Pin
+  GPIO_InitStruct.Pin = S2_Pin|S1_Pin|S0_Pin|D_OUT1_Pin
                           |D_OUT8_Pin|D_OUT4_Pin|D_OUT5_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -449,9 +449,11 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	HAL_UART_Receive_IT(&huart3, dataReceive, lengthReceive);
- 	if (htim->Instance == TIM1){
+ 	if (htim->Instance == TIM1)
+ 	{
 
-		if ( channelMux == 7){
+		if ( channelMux == 7)
+		{
 			ADC_Select_CH0(); //selecciono el canal del adc a leer
 			HAL_ADC_Start_IT(&hadc1); //inicio el acc en modo interrupcion
 			if (flagChange == 1){
@@ -459,14 +461,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				flagChange = 0 ;
 				envioDeDatos();
 			}
-		}else{
+		}
+		else
+		{
 			//Configuro las llaves selectoras del MUX
-			for (uint8_t i=0; i<3; i++){
+			for (uint8_t i=0; i<3; i++)
+			{
 				HAL_GPIO_WritePin(channelsIn[channelMux].port, channelsIn[channelMux].pin[i], (GPIO_PinState)channelsIn[channelMux].value[i]); //casteamos el valor para que sea un estado de pin admitido
 			}
 			ADC_Select_CH1(); //selecciono el canal del mux para leer
 			HAL_ADC_Start_IT(&hadc1);
-			if (flagChange == 1) {
+			if (flagChange == 1)
+			{
 				channelMux = (channelMux + 1) % 8; //para mantener el número entre 0 y 7
 				flagChange = 0 ;
 			}
@@ -526,20 +532,26 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 /*
  * Funcion que se encarga de leer las salidas y almacenar los datos de las entradas en el array sendData para después enviarlo por uart
  */
-void envioDeDatos(void){
+void envioDeDatos(void)
+{
 	uint8_t Outs = 0;
 	dataSend[0] = 'x';
 	dataSend[1] = 'f';
 	dataSend[2] = 'x';
 	analogToByte(analogInOut); //guarda los datos del 3 al 22
-	for (uint8_t i=23; i< lengthDigInOut + 23; i++){
-			if(i<=30) dataSend[i] = digitalIn[i-23]; // guardo en el array dataSend las entradas digitales
-			else{
-				//Guardo en el array sendData las salidas digitales
-				dataSend[i] = HAL_GPIO_ReadPin(channelsOut[Outs].port, channelsOut[Outs].digitalPin);
-				Outs = (Outs + 1) % 8;
-			}
+	for (uint8_t i=23; i< lengthDigInOut + 23; i++)
+	{
+		if(i<=30)
+		{
+			dataSend[i] = digitalIn[i-23]; // guardo en el array dataSend las entradas digitales
 		}
+		else
+		{
+			//Guardo en el array sendData las salidas digitales
+			dataSend[i] = HAL_GPIO_ReadPin(channelsOut[Outs].port, channelsOut[Outs].digitalPin);
+			Outs = (Outs + 1) % 8;
+		}
+	}
 	dataSend[39] = '\n';
 	HAL_UART_Transmit_IT(&huart3,dataSend, lengthTransmit); //envio de datos a través de la uart por interrupción
 
@@ -550,10 +562,12 @@ void envioDeDatos(void){
  */
 void analogToByte(uint16_t * analogData) {
   uint8_t k = 3;
-  for (uint8_t i = 0; i < lengthAnalogInOut; ++i) {
+  for (uint8_t i = 0; i < lengthAnalogInOut; ++i)
+  {
 	  uint16_t numero = analogData[i];
 	  // cada entero tipo uin16_t ocupa 2 bytes (uint8_t)
-      for (uint8_t j=0; j<2; j++){
+      for (uint8_t j=0; j<2; j++)
+      {
         dataSend[k] = (numero >> (j * 8)) & 0xFF;
         k++;
       }

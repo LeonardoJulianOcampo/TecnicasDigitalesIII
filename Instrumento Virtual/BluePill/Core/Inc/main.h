@@ -79,12 +79,12 @@ void Error_Handler(void);
 #define D_IN1_GPIO_Port GPIOB
 #define D_IN8_Pin GPIO_PIN_1
 #define D_IN8_GPIO_Port GPIOB
-#define S0_Pin GPIO_PIN_12
-#define S0_GPIO_Port GPIOB
+#define S2_Pin GPIO_PIN_12
+#define S2_GPIO_Port GPIOB
 #define S1_Pin GPIO_PIN_13
 #define S1_GPIO_Port GPIOB
-#define S2_Pin GPIO_PIN_14
-#define S2_GPIO_Port GPIOB
+#define S0_Pin GPIO_PIN_14
+#define S0_GPIO_Port GPIOB
 #define D_OUT1_Pin GPIO_PIN_15
 #define D_OUT1_GPIO_Port GPIOB
 #define D_OUT2_Pin GPIO_PIN_8

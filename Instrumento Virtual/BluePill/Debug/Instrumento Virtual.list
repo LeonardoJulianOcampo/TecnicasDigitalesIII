@@ -39,13 +39,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  17 .debug_macro  0001843d  00000000  00000000  00031db0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_line   00010035  00000000  00000000  0004a1ed  2**0
+ 18 .debug_line   0000f526  00000000  00000000  0004a1ed  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .debug_str    0008f67d  00000000  00000000  0005a222  2**0
+ 19 .debug_str    0008f6e8  00000000  00000000  00059713  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_frame  000039d8  00000000  00000000  000e98a0  2**2
+ 20 .debug_frame  000039d8  00000000  00000000  000e8dfc  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 00000073  00000000  00000000  000ed278  2**0
+ 21 .debug_line_str 00000073  00000000  00000000  000ec7d4  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -799,7 +799,7 @@ static void MX_GPIO_Init(void)
  8000546:	687b      	ldr	r3, [r7, #4]
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, S0_Pin|S1_Pin|S2_Pin|D_OUT1_Pin
+  HAL_GPIO_WritePin(GPIOB, S2_Pin|S1_Pin|S0_Pin|D_OUT1_Pin
  8000548:	2200      	movs	r2, #0
  800054a:	f24f 0138 	movw	r1, #61496	; 0xf038
  800054e:	4827      	ldr	r0, [pc, #156]	; (80005ec <MX_GPIO_Init+0x100>)
@@ -860,9 +860,9 @@ static void MX_GPIO_Init(void)
  800059e:	4813      	ldr	r0, [pc, #76]	; (80005ec <MX_GPIO_Init+0x100>)
  80005a0:	f001 fa12 	bl	80019c8 <HAL_GPIO_Init>
 
-  /*Configure GPIO pins : S0_Pin S1_Pin S2_Pin D_OUT1_Pin
+  /*Configure GPIO pins : S2_Pin S1_Pin S0_Pin D_OUT1_Pin
                            D_OUT8_Pin D_OUT4_Pin D_OUT5_Pin */
-  GPIO_InitStruct.Pin = S0_Pin|S1_Pin|S2_Pin|D_OUT1_Pin
+  GPIO_InitStruct.Pin = S2_Pin|S1_Pin|S0_Pin|D_OUT1_Pin
  80005a4:	f24f 0338 	movw	r3, #61496	; 0xf038
  80005a8:	613b      	str	r3, [r7, #16]
                           |D_OUT8_Pin|D_OUT4_Pin|D_OUT5_Pin;
@@ -927,18 +927,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  80005fe:	4946      	ldr	r1, [pc, #280]	; (8000718 <HAL_TIM_PeriodElapsedCallback+0x124>)
  8000600:	4846      	ldr	r0, [pc, #280]	; (800071c <HAL_TIM_PeriodElapsedCallback+0x128>)
  8000602:	f003 f846 	bl	8003692 <HAL_UART_Receive_IT>
- 	if (htim->Instance == TIM1){
+ 	if (htim->Instance == TIM1)
  8000606:	687b      	ldr	r3, [r7, #4]
  8000608:	681b      	ldr	r3, [r3, #0]
  800060a:	4a45      	ldr	r2, [pc, #276]	; (8000720 <HAL_TIM_PeriodElapsedCallback+0x12c>)
  800060c:	4293      	cmp	r3, r2
  800060e:	d17f      	bne.n	8000710 <HAL_TIM_PeriodElapsedCallback+0x11c>
+ 	{
 
-		if ( channelMux == 7){
+		if ( channelMux == 7)
  8000610:	4b44      	ldr	r3, [pc, #272]	; (8000724 <HAL_TIM_PeriodElapsedCallback+0x130>)
  8000612:	781b      	ldrb	r3, [r3, #0]
  8000614:	2b07      	cmp	r3, #7
  8000616:	d111      	bne.n	800063c <HAL_TIM_PeriodElapsedCallback+0x48>
+		{
 			ADC_Select_CH0(); //selecciono el canal del adc a leer
  8000618:	f000 f99a 	bl	8000950 <ADC_Select_CH0>
 			HAL_ADC_Start_IT(&hadc1); //inicio el acc en modo interrupcion
@@ -961,12 +963,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  8000636:	f000 f8ff 	bl	8000838 <envioDeDatos>
  800063a:	e048      	b.n	80006ce <HAL_TIM_PeriodElapsedCallback+0xda>
 			}
-		}else{
+		}
+		else
+		{
 			//Configuro las llaves selectoras del MUX
-			for (uint8_t i=0; i<3; i++){
+			for (uint8_t i=0; i<3; i++)
  800063c:	2300      	movs	r3, #0
  800063e:	73fb      	strb	r3, [r7, #15]
  8000640:	e029      	b.n	8000696 <HAL_TIM_PeriodElapsedCallback+0xa2>
+			{
 				HAL_GPIO_WritePin(channelsIn[channelMux].port, channelsIn[channelMux].pin[i], (GPIO_PinState)channelsIn[channelMux].value[i]); //casteamos el valor para que sea un estado de pin admitido
  8000642:	4b38      	ldr	r3, [pc, #224]	; (8000724 <HAL_TIM_PeriodElapsedCallback+0x130>)
  8000644:	781b      	ldrb	r3, [r3, #0]
@@ -1006,7 +1011,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  8000688:	781b      	ldrb	r3, [r3, #0]
  800068a:	461a      	mov	r2, r3
  800068c:	f001 fb37 	bl	8001cfe <HAL_GPIO_WritePin>
-			for (uint8_t i=0; i<3; i++){
+			for (uint8_t i=0; i<3; i++)
  8000690:	7bfb      	ldrb	r3, [r7, #15]
  8000692:	3301      	adds	r3, #1
  8000694:	73fb      	strb	r3, [r7, #15]
@@ -1019,11 +1024,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			HAL_ADC_Start_IT(&hadc1);
  80006a0:	4821      	ldr	r0, [pc, #132]	; (8000728 <HAL_TIM_PeriodElapsedCallback+0x134>)
  80006a2:	f000 fc77 	bl	8000f94 <HAL_ADC_Start_IT>
-			if (flagChange == 1) {
+			if (flagChange == 1)
  80006a6:	4b21      	ldr	r3, [pc, #132]	; (800072c <HAL_TIM_PeriodElapsedCallback+0x138>)
  80006a8:	781b      	ldrb	r3, [r3, #0]
  80006aa:	2b01      	cmp	r3, #1
  80006ac:	d10f      	bne.n	80006ce <HAL_TIM_PeriodElapsedCallback+0xda>
+			{
 				channelMux = (channelMux + 1) % 8; //para mantener el número entre 0 y 7
  80006ae:	4b1d      	ldr	r3, [pc, #116]	; (8000724 <HAL_TIM_PeriodElapsedCallback+0x130>)
  80006b0:	781b      	ldrb	r3, [r3, #0]
@@ -1258,11 +1264,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 08000838 <envioDeDatos>:
 
-
 /*
  * Funcion que se encarga de leer las salidas y almacenar los datos de las entradas en el array sendData para después enviarlo por uart
  */
-void envioDeDatos(void){
+void envioDeDatos(void)
+{
  8000838:	b590      	push	{r4, r7, lr}
  800083a:	b083      	sub	sp, #12
  800083c:	af00      	add	r7, sp, #0
@@ -1284,14 +1290,17 @@ void envioDeDatos(void){
 	analogToByte(analogInOut); //guarda los datos del 3 al 22
  8000854:	4821      	ldr	r0, [pc, #132]	; (80008dc <envioDeDatos+0xa4>)
  8000856:	f000 f849 	bl	80008ec <analogToByte>
-	for (uint8_t i=23; i< lengthDigInOut + 23; i++){
+	for (uint8_t i=23; i< lengthDigInOut + 23; i++)
  800085a:	2317      	movs	r3, #23
  800085c:	71bb      	strb	r3, [r7, #6]
  800085e:	e02a      	b.n	80008b6 <envioDeDatos+0x7e>
-			if(i<=30) dataSend[i] = digitalIn[i-23]; // guardo en el array dataSend las entradas digitales
+	{
+		if(i<=30)
  8000860:	79bb      	ldrb	r3, [r7, #6]
  8000862:	2b1e      	cmp	r3, #30
  8000864:	d808      	bhi.n	8000878 <envioDeDatos+0x40>
+		{
+			dataSend[i] = digitalIn[i-23]; // guardo en el array dataSend las entradas digitales
  8000866:	79bb      	ldrb	r3, [r7, #6]
  8000868:	f1a3 0217 	sub.w	r2, r3, #23
  800086c:	79bb      	ldrb	r3, [r7, #6]
@@ -1300,9 +1309,11 @@ void envioDeDatos(void){
  8000872:	4a19      	ldr	r2, [pc, #100]	; (80008d8 <envioDeDatos+0xa0>)
  8000874:	54d1      	strb	r1, [r2, r3]
  8000876:	e01b      	b.n	80008b0 <envioDeDatos+0x78>
-			else{
-				//Guardo en el array sendData las salidas digitales
-				dataSend[i] = HAL_GPIO_ReadPin(channelsOut[Outs].port, channelsOut[Outs].digitalPin);
+		}
+		else
+		{
+			//Guardo en el array sendData las salidas digitales
+			dataSend[i] = HAL_GPIO_ReadPin(channelsOut[Outs].port, channelsOut[Outs].digitalPin);
  8000878:	79fb      	ldrb	r3, [r7, #7]
  800087a:	4a1a      	ldr	r2, [pc, #104]	; (80008e4 <envioDeDatos+0xac>)
  800087c:	f852 2033 	ldr.w	r2, [r2, r3, lsl #3]
@@ -1319,7 +1330,7 @@ void envioDeDatos(void){
  8000896:	461a      	mov	r2, r3
  8000898:	4b0f      	ldr	r3, [pc, #60]	; (80008d8 <envioDeDatos+0xa0>)
  800089a:	551a      	strb	r2, [r3, r4]
-				Outs = (Outs + 1) % 8;
+			Outs = (Outs + 1) % 8;
  800089c:	79fb      	ldrb	r3, [r7, #7]
  800089e:	3301      	adds	r3, #1
  80008a0:	425a      	negs	r2, r3
@@ -1328,15 +1339,15 @@ void envioDeDatos(void){
  80008aa:	bf58      	it	pl
  80008ac:	4253      	negpl	r3, r2
  80008ae:	71fb      	strb	r3, [r7, #7]
-	for (uint8_t i=23; i< lengthDigInOut + 23; i++){
+	for (uint8_t i=23; i< lengthDigInOut + 23; i++)
  80008b0:	79bb      	ldrb	r3, [r7, #6]
  80008b2:	3301      	adds	r3, #1
  80008b4:	71bb      	strb	r3, [r7, #6]
  80008b6:	79bb      	ldrb	r3, [r7, #6]
  80008b8:	2b26      	cmp	r3, #38	; 0x26
  80008ba:	d9d1      	bls.n	8000860 <envioDeDatos+0x28>
-			}
 		}
+	}
 	dataSend[39] = '\n';
  80008bc:	4b06      	ldr	r3, [pc, #24]	; (80008d8 <envioDeDatos+0xa0>)
  80008be:	220a      	movs	r2, #10
@@ -1372,10 +1383,11 @@ void analogToByte(uint16_t * analogData) {
   uint8_t k = 3;
  80008f4:	2303      	movs	r3, #3
  80008f6:	73fb      	strb	r3, [r7, #15]
-  for (uint8_t i = 0; i < lengthAnalogInOut; ++i) {
+  for (uint8_t i = 0; i < lengthAnalogInOut; ++i)
  80008f8:	2300      	movs	r3, #0
  80008fa:	73bb      	strb	r3, [r7, #14]
  80008fc:	e01c      	b.n	8000938 <analogToByte+0x4c>
+  {
 	  uint16_t numero = analogData[i];
  80008fe:	7bbb      	ldrb	r3, [r7, #14]
  8000900:	005b      	lsls	r3, r3, #1
@@ -1384,10 +1396,11 @@ void analogToByte(uint16_t * analogData) {
  8000906:	881b      	ldrh	r3, [r3, #0]
  8000908:	817b      	strh	r3, [r7, #10]
 	  // cada entero tipo uin16_t ocupa 2 bytes (uint8_t)
-      for (uint8_t j=0; j<2; j++){
+      for (uint8_t j=0; j<2; j++)
  800090a:	2300      	movs	r3, #0
  800090c:	737b      	strb	r3, [r7, #13]
  800090e:	e00d      	b.n	800092c <analogToByte+0x40>
+      {
         dataSend[k] = (numero >> (j * 8)) & 0xFF;
  8000910:	897a      	ldrh	r2, [r7, #10]
  8000912:	7b7b      	ldrb	r3, [r7, #13]
@@ -1401,14 +1414,14 @@ void analogToByte(uint16_t * analogData) {
  8000920:	7bfb      	ldrb	r3, [r7, #15]
  8000922:	3301      	adds	r3, #1
  8000924:	73fb      	strb	r3, [r7, #15]
-      for (uint8_t j=0; j<2; j++){
+      for (uint8_t j=0; j<2; j++)
  8000926:	7b7b      	ldrb	r3, [r7, #13]
  8000928:	3301      	adds	r3, #1
  800092a:	737b      	strb	r3, [r7, #13]
  800092c:	7b7b      	ldrb	r3, [r7, #13]
  800092e:	2b01      	cmp	r3, #1
  8000930:	d9ee      	bls.n	8000910 <analogToByte+0x24>
-  for (uint8_t i = 0; i < lengthAnalogInOut; ++i) {
+  for (uint8_t i = 0; i < lengthAnalogInOut; ++i)
  8000932:	7bbb      	ldrb	r3, [r7, #14]
  8000934:	3301      	adds	r3, #1
  8000936:	73bb      	strb	r3, [r7, #14]
@@ -2200,98 +2213,44 @@ void SystemInit (void)
  8000cd2:	4770      	bx	lr
 
 08000cd4 <Reset_Handler>:
-  .weak Reset_Handler
-  .type Reset_Handler, %function
-Reset_Handler:
-
-/* Call the clock system initialization function.*/
-    bl  SystemInit
  8000cd4:	f7ff fff8 	bl	8000cc8 <SystemInit>
-
-/* Copy the data segment initializers from flash to SRAM */
-  ldr r0, =_sdata
  8000cd8:	480b      	ldr	r0, [pc, #44]	; (8000d08 <LoopFillZerobss+0xe>)
-  ldr r1, =_edata
  8000cda:	490c      	ldr	r1, [pc, #48]	; (8000d0c <LoopFillZerobss+0x12>)
-  ldr r2, =_sidata
  8000cdc:	4a0c      	ldr	r2, [pc, #48]	; (8000d10 <LoopFillZerobss+0x16>)
-  movs r3, #0
  8000cde:	2300      	movs	r3, #0
-  b LoopCopyDataInit
  8000ce0:	e002      	b.n	8000ce8 <LoopCopyDataInit>
 
 08000ce2 <CopyDataInit>:
-
-CopyDataInit:
-  ldr r4, [r2, r3]
  8000ce2:	58d4      	ldr	r4, [r2, r3]
-  str r4, [r0, r3]
  8000ce4:	50c4      	str	r4, [r0, r3]
-  adds r3, r3, #4
  8000ce6:	3304      	adds	r3, #4
 
 08000ce8 <LoopCopyDataInit>:
-
-LoopCopyDataInit:
-  adds r4, r0, r3
  8000ce8:	18c4      	adds	r4, r0, r3
-  cmp r4, r1
  8000cea:	428c      	cmp	r4, r1
-  bcc CopyDataInit
  8000cec:	d3f9      	bcc.n	8000ce2 <CopyDataInit>
-  
-/* Zero fill the bss segment. */
-  ldr r2, =_sbss
  8000cee:	4a09      	ldr	r2, [pc, #36]	; (8000d14 <LoopFillZerobss+0x1a>)
-  ldr r4, =_ebss
  8000cf0:	4c09      	ldr	r4, [pc, #36]	; (8000d18 <LoopFillZerobss+0x1e>)
-  movs r3, #0
  8000cf2:	2300      	movs	r3, #0
-  b LoopFillZerobss
  8000cf4:	e001      	b.n	8000cfa <LoopFillZerobss>
 
 08000cf6 <FillZerobss>:
-
-FillZerobss:
-  str  r3, [r2]
  8000cf6:	6013      	str	r3, [r2, #0]
-  adds r2, r2, #4
  8000cf8:	3204      	adds	r2, #4
 
 08000cfa <LoopFillZerobss>:
-
-LoopFillZerobss:
-  cmp r2, r4
  8000cfa:	42a2      	cmp	r2, r4
-  bcc FillZerobss
  8000cfc:	d3fb      	bcc.n	8000cf6 <FillZerobss>
-
-/* Call static constructors */
-    bl __libc_init_array
  8000cfe:	f003 fa07 	bl	8004110 <__libc_init_array>
-/* Call the application's entry point.*/
-  bl main
  8000d02:	f7ff fa23 	bl	800014c <main>
-  bx lr
  8000d06:	4770      	bx	lr
-  ldr r0, =_sdata
  8000d08:	20000000 	.word	0x20000000
-  ldr r1, =_edata
  8000d0c:	2000010c 	.word	0x2000010c
-  ldr r2, =_sidata
  8000d10:	080041a4 	.word	0x080041a4
-  ldr r2, =_sbss
  8000d14:	2000010c 	.word	0x2000010c
-  ldr r4, =_ebss
  8000d18:	2000028c 	.word	0x2000028c
 
 08000d1c <CAN1_RX1_IRQHandler>:
- * @retval : None
-*/
-    .section .text.Default_Handler,"ax",%progbits
-Default_Handler:
-Infinite_Loop:
-  b Infinite_Loop
  8000d1c:	e7fe      	b.n	8000d1c <CAN1_RX1_IRQHandler>
 	...
 
@@ -2382,7 +2341,7 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
     HAL_NVIC_SetPriority(SysTick_IRQn, TickPriority, 0U);
  8000d80:	2200      	movs	r2, #0
  8000d82:	6879      	ldr	r1, [r7, #4]
- 8000d84:	f04f 30ff 	mov.w	r0, #4294967295
+ 8000d84:	f04f 30ff 	mov.w	r0, #4294967295	; 0xffffffff
  8000d88:	f000 fd35 	bl	80017f6 <HAL_NVIC_SetPriority>
     uwTickPrio = TickPriority;
  8000d8c:	4a06      	ldr	r2, [pc, #24]	; (8000da8 <HAL_InitTick+0x5c>)
@@ -4258,7 +4217,7 @@ __STATIC_INLINE uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t P
 
   return (
            ((PreemptPriority & (uint32_t)((1UL << (PreemptPriorityBits)) - 1UL)) << SubPriorityBits) |
- 800176c:	f04f 32ff 	mov.w	r2, #4294967295
+ 800176c:	f04f 32ff 	mov.w	r2, #4294967295	; 0xffffffff
  8001770:	69bb      	ldr	r3, [r7, #24]
  8001772:	fa02 f303 	lsl.w	r3, r2, r3
  8001776:	43da      	mvns	r2, r3
@@ -4267,7 +4226,7 @@ __STATIC_INLINE uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t P
  800177c:	697b      	ldr	r3, [r7, #20]
  800177e:	409a      	lsls	r2, r3
            ((SubPriority     & (uint32_t)((1UL << (SubPriorityBits    )) - 1UL)))
- 8001780:	f04f 31ff 	mov.w	r1, #4294967295
+ 8001780:	f04f 31ff 	mov.w	r1, #4294967295	; 0xffffffff
  8001784:	697b      	ldr	r3, [r7, #20]
  8001786:	fa01 f303 	lsl.w	r3, r1, r3
  800178a:	43d9      	mvns	r1, r3
@@ -4312,7 +4271,7 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
  80017b8:	6053      	str	r3, [r2, #4]
   NVIC_SetPriority (SysTick_IRQn, (1UL << __NVIC_PRIO_BITS) - 1UL); /* set Priority for Systick Interrupt */
  80017ba:	210f      	movs	r1, #15
- 80017bc:	f04f 30ff 	mov.w	r0, #4294967295
+ 80017bc:	f04f 30ff 	mov.w	r0, #4294967295	; 0xffffffff
  80017c0:	f7ff ff90 	bl	80016e4 <__NVIC_SetPriority>
   SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
  80017c4:	4b05      	ldr	r3, [pc, #20]	; (80017dc <SysTick_Config+0x40>)

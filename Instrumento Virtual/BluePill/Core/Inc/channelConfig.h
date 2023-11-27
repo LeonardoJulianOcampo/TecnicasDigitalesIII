@@ -18,14 +18,14 @@ typedef struct {
 
 
 ChannelInConfig channelsIn[] = {
-	{GPIOB, {S0_Pin, S1_Pin, S2_Pin}, {0,0,0}, GPIOB, D_IN1_Pin}, // Case 0
-	{GPIOB, {S0_Pin, S1_Pin, S2_Pin}, {0,0,}, GPIOA, D_IN2_Pin}, // Case 1
-	{GPIOB, {S0_Pin, S1_Pin, S2_Pin}, {0,1,0}, GPIOA, D_IN3_Pin}, // Case 2
-	{GPIOB, {S0_Pin, S1_Pin, S2_Pin}, {0,1,1}, GPIOA, D_IN4_Pin}, // Case 3
-	{GPIOB, {S0_Pin, S1_Pin, S2_Pin}, {1,0,0}, GPIOA, D_IN5_Pin}, // Case 4
-	{GPIOB, {S0_Pin, S1_Pin, S2_Pin}, {1,0,1}, GPIOA, D_IN6_Pin}, // Case 5
-	{GPIOB, {S0_Pin, S1_Pin, S2_Pin}, {1,1,0}, GPIOA, D_IN7_Pin}, // Case 6
-	{GPIOB, {S0_Pin, S1_Pin, S2_Pin}, {1,1,1}, GPIOB, D_IN8_Pin}, // Case 7
+	{GPIOB, {S1_Pin, S2_Pin, S0_Pin}, {0,0,0}, GPIOB, D_IN1_Pin}, // Case 0
+	{GPIOB, {S1_Pin, S2_Pin, S0_Pin}, {0,0,1}, GPIOA, D_IN2_Pin}, // Case 1
+	{GPIOB, {S1_Pin, S2_Pin, S0_Pin}, {0,1,0}, GPIOA, D_IN3_Pin}, // Case 2
+	{GPIOB, {S1_Pin, S2_Pin, S0_Pin}, {0,1,1}, GPIOA, D_IN4_Pin}, // Case 3
+	{GPIOB, {S1_Pin, S2_Pin, S0_Pin}, {1,0,0}, GPIOA, D_IN5_Pin}, // Case 4
+	{GPIOB, {S1_Pin, S2_Pin, S0_Pin}, {1,0,1}, GPIOA, D_IN6_Pin}, // Case 5
+	{GPIOB, {S1_Pin, S2_Pin, S0_Pin}, {1,1,0}, GPIOA, D_IN7_Pin}, // Case 6
+	{GPIOB, {S1_Pin, S2_Pin, S0_Pin}, {1,1,1}, GPIOB, D_IN8_Pin}, // Case 7
 };
 
 ChannelOutConfig channelsOut[] = {
