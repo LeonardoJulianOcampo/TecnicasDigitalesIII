@@ -59,6 +59,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define A_IN8_Pin GPIO_PIN_0
+#define A_IN8_GPIO_Port GPIOA
 #define IN_MUX_Pin GPIO_PIN_1
 #define IN_MUX_GPIO_Port GPIOA
 #define D_IN7_Pin GPIO_PIN_2
@@ -99,6 +101,10 @@ void Error_Handler(void);
 #define D_OUT4_GPIO_Port GPIOB
 #define D_OUT5_Pin GPIO_PIN_5
 #define D_OUT5_GPIO_Port GPIOB
+#define A_OUT2_Pin GPIO_PIN_6
+#define A_OUT2_GPIO_Port GPIOB
+#define A_OUT1_Pin GPIO_PIN_7
+#define A_OUT1_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
